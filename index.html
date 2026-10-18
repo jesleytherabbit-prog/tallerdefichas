@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Tutorial interactivo para novatos del Sistema Avadense: etapa, atributos, habilidades, tiradas, combate y modificadores.">
+<title>Taller de Fichas Avadense</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@600;700&display=swap">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>
+/* Layout: una parada a la vez (columna de lectura) + ficha viva fija a la derecha en escritorio, barra inferior en móvil */
+:root{
+  --bg:#f5f2fb; --surface:#ffffff; --surface-2:#eee8f8; --ink:#2a2340; --muted:#665e82; --line:#dcd3ec;
+  --accent:#7553b0; --accent-soft:#e6dcf7; --on-accent:#ffffff;
+  --ok:#2c8264; --ok-soft:#dcf1e8; --warn:#9a5f17; --warn-soft:#fbecd6; --bad:#ad3f52; --bad-soft:#f8dfe4;
+  --vig:#c95a43; --des:#22857b; --car:#b84d80; --vol:#a87410; --per:#2f76b3; --int:#4e52b8; --pod:#8044b8;
+  --display:"Cormorant Garamond", "Cormorant", Georgia, serif;
+  --body:"Atkinson Hyperlegible", "Verdana", system-ui, sans-serif;
+  --fs:17px; --radius:14px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#18142a; --surface:#221c37; --surface-2:#2b2446; --ink:#efeafb; --muted:#aaa0c8; --line:#3e3562;
+  --accent:#b99de9; --accent-soft:#3a2f5c; --on-accent:#1c1630;
+  --ok:#72cfa9; --ok-soft:#1f3b33; --warn:#e9b46a; --warn-soft:#41321c; --bad:#f08d9d; --bad-soft:#47232c;
+  --vig:#f08e77; --des:#5fcabd; --car:#ec8fbb; --vol:#e2b54f; --per:#78b5ec; --int:#9a9df0; --pod:#c193f0;
+  color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#18142a; --surface:#221c37; --surface-2:#2b2446; --ink:#efeafb; --muted:#aaa0c8; --line:#3e3562;
+  --accent:#b99de9; --accent-soft:#3a2f5c; --on-accent:#1c1630;
+  --ok:#72cfa9; --ok-soft:#1f3b33; --warn:#e9b46a; --warn-soft:#41321c; --bad:#f08d9d; --bad-soft:#47232c;
+  --vig:#f08e77; --des:#5fcabd; --car:#ec8fbb; --vol:#e2b54f; --per:#78b5ec; --int:#9a9df0; --pod:#c193f0;
+  color-scheme:dark }
+
+*{box-sizing:border-box}
+html{font-size:var(--fs)}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:1rem;line-height:1.6;margin:0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+h1,h2,h3{font-family:var(--display);font-weight:700;line-height:1.15;text-wrap:balance;margin:0}
+p{margin:0}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+
+/* Cabecera */
+.top{padding-block:28px 8px}
+.top-row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.eyebrow{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.top h1{font-size:clamp(2.1rem,5vw,3.2rem);color:var(--ink)}
+.top h1 em{font-style:normal;color:var(--accent)}
+.lede{max-width:60ch;color:var(--muted);margin-top:6px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+.tool{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:.88rem;min-height:40px}
+.tool[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+
+/* Ruta */
+.route-scroll{overflow-x:auto;margin-top:18px;padding-bottom:4px}
+.route{display:flex;gap:6px;list-style:none;margin:0;padding:0;min-width:max-content}
+.route a{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px 7px 8px;font-size:.9rem;min-height:44px}
+.route a .n{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--surface-2);font-weight:700;font-size:.8rem}
+.route a[aria-current="step"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.route a[aria-current="step"] .n{background:var(--on-accent);color:var(--accent)}
+.route a.done .n{background:var(--ok);color:var(--surface)}
+
+/* Rejilla principal */
+.main{display:grid;grid-template-columns:minmax(0,1fr);gap:28px;padding-block:20px 120px}
+@media (min-width:980px){.main{grid-template-columns:minmax(0,1fr) 300px}.mbar{display:none!important}}
+.stop{display:flex;flex-direction:column;gap:22px;min-width:0}
+.stop-head h2{font-size:clamp(1.8rem,4vw,2.4rem)}
+.short{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px}
+.short h3{font-family:var(--body);font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.short ul{margin:6px 0 0;padding-left:1.1em;display:flex;flex-direction:column;gap:4px}
+.short li::marker{color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel h3{font-size:1.45rem}
+.hint{color:var(--muted);font-size:.92rem}
+details.more{border:1px dashed var(--line);border-radius:var(--radius);padding:10px 16px;background:transparent}
+details.more summary{cursor:pointer;font-weight:700;color:var(--accent);min-height:32px;display:flex;align-items:center}
+details.more[open] summary{margin-bottom:8px}
+details.more p+p{margin-top:8px}
+
+/* Términos del glosario */
+.term{background:none;border:0;padding:0;border-bottom:2px dotted var(--accent);color:inherit;font-weight:700;line-height:1.2}
+.gloss{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));width:min(520px,calc(100% - 32px));background:var(--ink);color:var(--bg);border-radius:var(--radius);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;z-index:30;box-shadow:0 10px 30px rgb(0 0 0 / .25)}
+@media (min-width:980px){.gloss{bottom:calc(24px + env(safe-area-inset-bottom,0px))}}
+.gloss[hidden]{display:none}
+.gloss b{display:block;font-family:var(--display);font-size:1.3rem}
+.gloss button{margin-left:auto;background:transparent;border:1px solid currentColor;border-radius:999px;color:inherit;padding:2px 12px;min-height:36px}
+
+/* Etapas */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.card{border:1.5px solid var(--line);background:var(--surface);border-radius:12px;padding:12px;text-align:left;display:flex;flex-direction:column;gap:2px;min-height:96px}
+.card b{font-family:var(--display);font-size:1.35rem}
+.card small{color:var(--muted);line-height:1.3}
+.card[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.card .g{margin-top:auto;font-weight:700;font-variant-numeric:tabular-nums}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.fact{background:var(--surface-2);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.fact .k{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+.fact .v{font-size:1.25rem;font-weight:700;font-variant-numeric:tabular-nums}
+.fact .d{font-size:.86rem;color:var(--muted);line-height:1.35}
+
+/* Avisos */
+.note{border-radius:12px;padding:10px 14px;font-size:.93rem;display:flex;gap:10px;align-items:flex-start}
+.note.warn{background:var(--warn-soft);color:var(--ink)}
+.note.warn::before{content:"!";flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--warn);color:var(--surface);font-weight:700;font-size:.8rem}
+.note.bad{background:var(--bad-soft)}
+.note.bad::before{content:"×";flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--bad);color:var(--surface);font-weight:700}
+.note.ok{background:var(--ok-soft)}
+.note.ok::before{content:"✓";flex:none;display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ok);color:var(--surface);font-weight:700;font-size:.8rem}
+.note.info{background:var(--surface-2)}
+
+/* Atributos */
+.limits{display:flex;flex-wrap:wrap;gap:8px}
+.slot{border-radius:999px;padding:4px 12px;font-size:.88rem;background:var(--surface-2);font-variant-numeric:tabular-nums}
+.slot.full{background:var(--warn-soft)}
+.attr{display:grid;grid-template-columns:150px minmax(0,1fr);gap:6px 16px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.attr:first-of-type{border-top:0}
+@media (max-width:620px){.attr{grid-template-columns:minmax(0,1fr)}}
+.aname{display:flex;flex-direction:column;line-height:1.2}
+.aname b{font-size:1.08rem;color:var(--c)}
+.aname small{color:var(--muted);font-size:.8rem}
+.ctl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.step{width:40px;height:40px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);font-size:1.2rem;font-weight:700;display:grid;place-items:center}
+.step:disabled{opacity:.35;cursor:not-allowed}
+.pips{display:flex;gap:5px}
+.pip{width:30px;height:30px;border-radius:8px;border:2px solid var(--c);background:transparent;font-size:.75rem;font-weight:700;color:var(--muted);padding:0}
+.pip.on{background:var(--c);color:var(--surface)}
+.pip.lock{border-style:dashed;opacity:.45}
+.val{font-size:1.6rem;font-weight:700;min-width:1.4ch;text-align:center;font-variant-numeric:tabular-nums}
+.cost{font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.adesc{grid-column:2;font-size:.92rem;color:var(--muted)}
+@media (max-width:620px){.adesc{grid-column:1}}
+.adesc b{color:var(--ink)}
+.tal{font-size:.82rem;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--surface);min-height:32px}
+.tal[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+
+/* Habilidades */
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.sgroup{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.sgroup>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;background:var(--surface-2);min-height:48px}
+.sgroup>summary::-webkit-details-marker{display:none}
+.sgroup>summary::after{content:"+";margin-left:auto;font-weight:700;font-size:1.2rem;color:var(--muted)}
+.sgroup[open]>summary::after{content:"−"}
+.sgroup>summary b{color:var(--c);font-size:1.05rem}
+.sgroup>summary small{color:var(--muted)}
+.skill{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px;padding:12px 14px;border-top:1px solid var(--line);align-items:center}
+@media (max-width:720px){.skill{grid-template-columns:minmax(0,1fr)}}
+.skill .sn{display:flex;flex-direction:column;line-height:1.3;min-width:0}
+.skill .sn b{font-size:1rem}
+.skill .sn small{color:var(--muted);font-size:.86rem}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:999px;padding:1px 8px;margin-left:6px;background:var(--accent-soft);color:var(--ink);vertical-align:2px}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;flex-wrap:nowrap}
+.seg button{border:0;border-left:1px solid var(--line);background:var(--surface);padding:6px 9px;font-size:.8rem;line-height:1.15;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:56px}
+.seg button:first-child{border-left:0}
+.seg button span{font-weight:700;font-size:.92rem;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--c);color:var(--surface)}
+.seg button.lock{opacity:.4;background:repeating-linear-gradient(135deg,transparent 0 5px,var(--surface-2) 5px 10px)}
+.seg-wrap{overflow-x:auto;max-width:100%}
+.ladder-lv{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;text-align:center}
+.ladder-lv div{background:var(--surface-2);border-radius:10px;padding:8px 4px;font-size:.85rem;line-height:1.3}
+.ladder-lv b{display:block;font-size:1.3rem}
+.ladder-lv .nv{font-size:.75rem;color:var(--muted)}
+
+/* Fórmulas con fichas */
+.formula{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.tok{display:inline-flex;flex-direction:column;gap:3px;border:1.5px solid var(--c,var(--line));border-radius:10px;padding:5px 10px;background:var(--surface);min-width:64px}
+.tok .tl{font-size:.75rem;color:var(--muted);line-height:1.2}
+.tok .tv{font-size:1.2rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.tok.neg{border-style:dashed}
+.op{font-size:1.3rem;font-weight:700;color:var(--muted)}
+.res{display:inline-flex;align-items:center;justify-content:center;min-width:56px;height:56px;padding:0 12px;border-radius:14px;background:var(--accent);color:var(--on-accent);font-size:1.7rem;font-weight:700;font-variant-numeric:tabular-nums}
+.dots{display:flex;flex-wrap:wrap;gap:2px;max-width:150px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted))}
+.dot.minus{background:transparent;border:1.5px solid var(--bad)}
+.nodots .dots,.nodots .groups{display:none}
+.groups{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.grp{display:flex;gap:2px;padding:3px;border-radius:6px;background:var(--surface-2)}
+.grp i{width:9px;height:9px;border-radius:50%;background:var(--accent)}
+.grp.left i{background:transparent;border:1.5px solid var(--muted)}
+
+/* Tirada */
+.roll-grid{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:18px;align-items:start}
+@media (max-width:720px){.roll-grid{grid-template-columns:minmax(0,1fr)}}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:.85rem;font-weight:700;color:var(--muted)}
+select{border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 10px;min-height:44px;max-width:100%}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.die-row{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.die{width:92px;height:92px;flex:none}
+.die polygon{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3}
+.die line{stroke:var(--accent);stroke-width:1.5;opacity:.5}
+.die text{fill:var(--ink);font-family:var(--body);font-weight:700;font-size:30px}
+.die.spin{animation:spin .5s ease-out}
+@keyframes spin{from{transform:rotate(-200deg) scale(.7)}to{transform:none}}
+@media (prefers-reduced-motion:reduce){.die.spin{animation:none}}
+.btn{border:0;background:var(--accent);color:var(--on-accent);border-radius:999px;padding:10px 20px;font-weight:700;min-height:46px}
+.btn.ghost{background:transparent;color:var(--accent);border:1.5px solid var(--accent)}
+.faces{display:flex;gap:4px;flex-wrap:wrap}
+.faces button{width:38px;height:38px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-variant-numeric:tabular-nums}
+.faces button[aria-pressed="true"]{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.ladder{display:flex;flex-direction:column-reverse;gap:4px}
+.rung{display:grid;grid-template-columns:44px minmax(0,1fr);gap:8px;align-items:center;border-radius:10px;padding:6px 10px;background:var(--surface-2);font-size:.9rem}
+.rung b{font-variant-numeric:tabular-nums;font-size:1.05rem}
+.rung.reach{background:var(--ok-soft)}
+.rung.target{outline:2px solid var(--accent)}
+.rung.miss{opacity:.6}
+.verdict{font-size:1.05rem}
+.need{font-size:1.05rem;background:var(--surface-2);border-radius:12px;padding:10px 14px}
+.need b{font-size:1.3rem}
+
+/* Combate */
+.cgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.cval{border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.cval-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.cval-h h4{margin:0;font-size:1.05rem}
+.cval-h small{color:var(--muted)}
+.cval .why{font-size:.9rem;color:var(--muted)}
+.wound{display:flex;flex-direction:column;gap:8px}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:36px}
+
+/* Modificadores */
+.race{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.race .card{min-height:0}
+.race .card .chg{font-size:.82rem;color:var(--muted);margin-top:6px;line-height:1.35}
+.opt{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
+.opt:first-of-type{border-top:0}
+.sw{width:50px;height:30px;border-radius:999px;border:1.5px solid var(--line);background:var(--surface-2);position:relative;padding:0;margin-top:2px}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:left .15s}
+.sw[aria-pressed="true"]{background:var(--accent);border-color:var(--accent)}
+.sw[aria-pressed="true"]::after{left:23px;background:var(--on-accent)}
+.sw:disabled{opacity:.4}
+.opt b{font-size:1rem}
+.opt .od{font-size:.9rem;color:var(--muted)}
+.opt .src{font-size:.78rem;color:var(--muted);font-style:italic}
+.delta{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.delta span{font-size:.82rem;border-radius:999px;padding:2px 10px;background:var(--surface-2);font-variant-numeric:tabular-nums}
+.delta span.up{background:var(--ok-soft)}
+.delta span.down{background:var(--bad-soft)}
+.subh{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-top:6px}
+
+/* Reto */
+.reto{border:1.5px solid var(--accent);border-radius:var(--radius);padding:16px 18px;display:flex;flex-direction:column;gap:10px;background:var(--surface)}
+.reto .eyebrow{color:var(--accent)}
+.reto .q{font-size:1.08rem;font-weight:700}
+.answers{display:flex;flex-direction:column;gap:8px}
+.answers button{text-align:left;border:1.5px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 14px;min-height:46px}
+.answers button.right{border-color:var(--ok);background:var(--ok-soft)}
+.answers button.wrong{border-color:var(--bad);background:var(--bad-soft)}
+
+.pager{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* Ficha viva */
+.aside{display:none}
+@media (min-width:980px){.aside{display:block}}
+.sheet{position:sticky;top:calc(16px + env(safe-area-inset-top,0px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:12px}
+.sheet h3{font-size:1.35rem}
+.bar{height:12px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.bar.over i{background:var(--bad)}
+.gtxt{font-variant-numeric:tabular-nums;font-size:.95rem}
+.gtxt b{font-size:1.2rem}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;font-size:.93rem}
+.kv span:nth-child(even){font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.mbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);padding:10px max(16px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;gap:12px;align-items:center}
+.mbar .bar{flex:1}
+.mbar a{color:var(--accent);font-weight:700;white-space:nowrap}
+
+.bb{width:100%;min-height:220px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.8rem;border:1.5px solid var(--line);border-radius:10px;background:var(--surface-2);color:var(--ink);padding:10px;resize:vertical}
+.sum{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.sum div{background:var(--surface-2);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column}
+.sum small{color:var(--muted);font-size:.78rem}
+.sum b{font-size:1.25rem;font-variant-numeric:tabular-nums}
+footer.foot{color:var(--muted);font-size:.85rem;padding-block:0 40px}
+</style>
+</head>
+<body>
+
+<header class="top wrap">
+  <div class="top-row">
+    <div>
+      <p class="eyebrow">Sistema Avadense · creación de personaje</p>
+      <h1>Taller de <em>Fichas</em></h1>
+      <p class="lede">Seis paradas para entender tu ficha. Cambia cualquier valor y mira qué se mueve: las cuentas las hace la página, tú decides.</p>
+    </div>
+    <div class="tools" role="group" aria-label="Lectura">
+      <button class="tool" data-act="font" data-v="-1" data-k="font-1" aria-label="Texto más pequeño">A−</button>
+      <button class="tool" data-act="font" data-v="1" data-k="font1" aria-label="Texto más grande">A+</button>
+      <button class="tool" id="dotsBtn" data-act="dots" data-k="dots" aria-pressed="true">Puntitos en las cuentas</button>
+    </div>
+  </div>
+  <nav class="route-scroll" aria-label="Paradas">
+    <ol class="route" id="route"></ol>
+  </nav>
+</header>
+
+<div class="wrap main" id="main">
+  <div id="stops" style="min-width:0"></div>
+  <aside class="aside"><div class="sheet" id="sheet"></div></aside>
+</div>
+<footer class="foot wrap">Tutorial para novatos by Hana Park 💜</footer>
+
+<div class="mbar" id="mbar"></div>
+<div class="gloss" id="gloss" role="dialog" aria-live="polite" hidden></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- DATOS ---------- */
+const ETAPAS=[
+ {id:"infante",n:"Infante",who:"Alumno de 1º a 3º",g:2000,pa:8,u:1,h:1,caps:[4,3,3,3,3,3,3],capsTxt:"Uno al 4 y seis al 3",tal:0,maxSk:2,tv:"Trasfondos y Ventajas al I"},
+ {id:"adolescente",n:"Adolescente",who:"Alumno de 4º a 7º",g:4000,pa:12,u:2,h:2,caps:[4,4,4,3,3,3,3],capsTxt:"Tres al 4 y cuatro al 3",tal:0,maxSk:3,tv:"Trasfondos y Ventajas al II"},
+ {id:"joven",n:"Joven",who:"Graduado, hasta 30 años",g:8000,pa:17,u:3,h:3,caps:[4,4,4,4,3,3,3],capsTxt:"Cuatro al 4",tal:0,maxSk:3,tv:"Trasfondos y Ventajas al III",capsNote:"El texto oficial dice solo «Cuatro al 4». Aquí los otros tres atributos quedan con techo 3, como en las etapas anteriores. Si el staff te dice otra cosa, manda el staff."},
+ {id:"adulto",n:"Adulto",who:"De 31 a 50 años",g:14000,pa:17,u:3,h:3,caps:null,capsTxt:"Sin reparto en la tabla",tal:4,maxSk:3,tv:"Trasfondos y Ventajas al III"},
+ {id:"experimentado",n:"Experimentado",who:"De 51 a 79 años",g:22000,pa:12,u:2,h:2,caps:null,capsTxt:"Sin reparto en la tabla",tal:null,maxSk:3,tv:"Trasfondos al IV"},
+ {id:"veterano",n:"Veterano",who:"80 años o más",g:32000,pa:8,u:1,h:1,caps:null,capsTxt:"Sin reparto en la tabla",tal:null,maxSk:3,tv:"Trasfondos al V"}
+];
+const ATTRS=[
+ {id:"vig",n:"Vigor",grp:"Físico",up:"VIGOR",d:["Nulo. ¿Cómo sostienes tu propio peso?","Torpe. Pasas más tiempo enfermo que sano.","Normal. Mueves casi todos los muebles de casa sin ayuda.","Bueno. Buena forma física, ejercicio semanal.","Muy bueno. Aguantas el alcohol como otros los refrescos.","Sobresaliente. Cargas con dos personas en una caminata corta.","Extraordinario. Levantas a un semigigante sobre la cabeza. Un rato.","Mítico. Si pelearas contra una casa, se cansaría antes ella.","Legendario. En la antigüedad te habrían llamado semidiós."]},
+ {id:"des",n:"Destreza",grp:"Físico",up:"DESTREZA",d:["Nulo. Pasas más tiempo en el suelo que de pie.","Torpe. Neville Longbottom estaría orgulloso de ti.","Normal. No eres gimnasta, pero tampoco te avergüenzas.","Bueno. Hay gracia en tus movimientos.","Muy bueno. Antes estaba en su bolsillo; ahora está en tu mano.","Sobresaliente. Podrías volar de pie sobre una escoba.","Extraordinario. Te ríes de lo torpes que son los gatos.","Mítico. Otros caminan sobre una cuerda. Tú corres.","Legendario. Es más fácil darle un puñetazo a un mosquito."]},
+ {id:"car",n:"Carisma",grp:"Social",up:"CARISMA",d:["Nulo. ¿Existes? Nadie lo había notado.","Torpe. Hay algo raro en ti y a la gente no le gusta.","Normal. Caes bien a muchos y mal a algunos.","Bueno. Haces amistades sin esfuerzo.","Muy bueno. Sueles ser el centro de la conversación.","Sobresaliente. Sueles liderar cualquier grupo.","Extraordinario. Te ofrecen ayuda sin que la pidas.","Mítico. Podrías levantar ejércitos a tu alrededor.","Legendario. Te dan la razón incluso cuando no deberían."]},
+ {id:"vol",n:"Voluntad",grp:"Social",up:"VOLUNTAD",d:["Nulo. Vivir te agota.","Torpe. Mentalidad débil; parece que siempre andas con miedo.","Normal. Mantienes tus ideas si la presión no es mucha.","Bueno. Podrías ganarte la vida como artista itinerante.","Muy bueno. Tu seguridad es contagiosa.","Sobresaliente. Dejas un poco de ti en lo que creas.","Extraordinario. Soportas las peores torturas sin hablar.","Mítico. Tus obras podrían exponerse durante siglos.","Legendario. Es más fácil doblegar una montaña."]},
+ {id:"per",n:"Percepción",grp:"Mental",up:"PERCEPCIÓN",d:["Nulo. Desconoces si existe un mundo fuera de ti.","Torpe. Siempre tienes la mente en otro sitio.","Normal. Captas lo esencial; las sutilezas se te escapan.","Bueno. Notas las sutilezas con los cinco sentidos.","Muy bueno. Casi nada se te escapa.","Sobresaliente. Notas al instante el menor cambio.","Extraordinario. Prácticamente nada escapa a tus sentidos.","Mítico. La gente cree que usas magia para percibir. No.","Legendario. Si no lo percibes, es que no está."]},
+ {id:"int",n:"Inteligencia",grp:"Mental",up:"INTELIGENCIA",d:["Nulo. Sabes muy poco, y es tu estado natural.","Torpe. Los acertijos te hacen pasar un mal rato.","Normal. Sabes lo suficiente para conocer tus límites.","Bueno. Con tiempo, ves patrones que otros pasan por alto.","Muy bueno. Dejas a los demás pensando «debí decirle…».","Sobresaliente. Ordenas información compleja con facilidad.","Extraordinario. Haces de cabeza las operaciones más complejas.","Mítico. Eres un genio: con tiempo entiendes cualquier cosa.","Legendario. Recuerdas y analizas todo lo que has percibido."]},
+ {id:"pod",n:"Poder",grp:"Mágico",up:"PODER",d:["Nulo. Eres squib.","Torpe. Todavía vas a Hogwarts. O eso esperamos.","Normal. Te graduaste sin sufrir y sin lucirte.","Bueno. Destacas entre tus amistades con la varita.","Muy bueno. Quien te vio con la varita te recuerda años.","Sobresaliente. Verte hacer magia es una forma de arte.","Extraordinario. Conoces muchos secretos de la magia.","Mítico. De los magos más poderosos de tu generación.","Legendario. Disculpe, señor Merlín, no le había reconocido."]}
+];
+const A=Object.fromEntries(ATTRS.map(a=>[a.id,a]));
+const SK=[
+ ["atletismo","Atletismo","vig","Correr, saltar, trepar, aguantar el esfuerzo."],
+ ["pelea","Pelea","vig","Puñetazos, patadas y armas.","Ataque Físico"],
+ ["esquivar","Esquivar","des","Ponerte a cubierto y no recibir daño.","Defensa","Esquiva"],
+ ["latrocinio","Latrocinio","des","Cerraduras, falsificaciones, cajas fuertes, timos."],
+ ["sigilo","Sigilo","des","Que no te vean ni te oigan; esconder objetos."],
+ ["volar","Volar","des","Escoba: carreras, acrobacias, Quidditch.",null,"Vuelo"],
+ ["coordinacion","Coordinación","car","Organizar a otros para que remen juntos."],
+ ["intimidacion","Intimidación","car","Presión y miedo para conseguir lo que quieres."],
+ ["oratoria","Oratoria","car","Hacer llegar una idea: discursos, cartas, debates."],
+ ["seducir","Seducir","car","Acercar a alguien a ti; volver aliados a los rivales.",null,"Seducción"],
+ ["subterfugio","Subterfugio","car","Mentir, disimular, jugar a dos bandas."],
+ ["arte","Arte / Artesanía","vol","Crear o arreglar cosas. Se elige una especialidad."],
+ ["estilo","Estilo","vol","Quedar bien hagas lo que hagas, aciertes o falles."],
+ ["frialdad","Frialdad","vol","Mantener la calma; resistir manipulación y miedo."],
+ ["alerta","Alerta","per","Notar lo que ves, oyes y hueles; que no te sorprendan."],
+ ["consciencia","Consciencia","per","Percibir lo sobrenatural: encantamientos, presencias."],
+ ["empatia","Empatía","per","Leer emociones y saber si te mienten."],
+ ["iniciativa","Iniciativa","per","Reaccionar rápido; decide quién actúa primero.","Iniciativa"],
+ ["investigacion","Investigación","per","Encontrar y unir pistas."],
+ ["adivinacion","Adivinación","int","Presagios, posos de té, el futuro."],
+ ["arcanismo","Arcanismo","int","Teoría de la magia: cómo y por qué funciona."],
+ ["callejeo","Callejeo","int","La calle: contactos, jerga, dónde comprar y vender."],
+ ["cultmag","Cultura Mágica","int","Historia, linajes y saber académico mágico."],
+ ["cultmug","Cultura Muggle","int","Moverte entre muggles y usar sus cosas."],
+ ["herbologia","Herbología","int","Plantas mágicas: usos, peligros, venenos."],
+ ["magizoologia","Magizoología","int","Criaturas: rastros, debilidades, trato."],
+ ["medicina","Medicina","int","Primeros auxilios y curar el cuerpo."],
+ ["politica","Política","int","Leyes, burocracia, Wizengamot."],
+ ["supervivencia","Supervivencia","int","Vivir a la intemperie: rastrear, orientarte."],
+ ["duelo","Duelo","pod","Combate con varita.","Ataque Mágico"],
+ ["pociones","Pociones","pod","Elaborar pociones.","Puntos de Pociones"],
+ ["rituales","Rituales","pod","Magia que permanece en el tiempo.","Puntos de Rituales"]
+].map(s=>({id:s[0],n:s[1],a:s[2],d:s[3],cb:s[4]||null,bb:s[5]||s[1]}));
+const SKM=Object.fromEntries(SK.map(s=>[s.id,s]));
+const LV=["Desentrenado","Novato","Competente","Experto","Maestro"];
+const LVs=["Desentr.","Novato","Compet.","Experto","Maestro"];
+const BONO=[0,1,2,4,7];
+const ACOST=[0,250,550,950,1500,2250,3250,4550];
+const ACOST_STEP=[0,250,300,400,550,750,1000,1300];
+const SCOST=[0,75,225,475,875], SSTEP=[0,75,150,250,400];
+const ARTCOST=[0,38,113,238,438], ARTSTEP=[0,38,75,125,200];
+const ARTES=["Ajedrez Mágico","Baile","Canto","Escritura","Escultura","Fotografía","Gobbstones","Instrumento musical","Juegos muggles","Naipes explosivos","Pintura"];
+const ARTESANIAS=["Albañilería","Alfarería","Agricultura","Carpintería","Cocina","Costura","Forja","Ingeniería","Varitería"];
+const ALTAR_OK=["Albañilería","Alfarería","Carpintería","Forja","Ingeniería"];
+const DIFS=[[5,"Rutinaria"],[7,"Fácil"],[9,"Moderada"],[12,"Complicada"],[15,"Difícil"],[18,"Heroica"],[21,"Épica"],[25,"Imposible"]];
+const RAZAS=[
+ {id:"humano",n:"Humano",c:0,d:"La raza por defecto.",chg:"No cambia nada en la ficha."},
+ {id:"metamorfomago",n:"Metamorfomago",c:500,d:"Cambia su aspecto a voluntad.",chg:"No cambia números de combate. +2 a Subterfugio para hacerse pasar por otra persona."},
+ {id:"semiduende",n:"Semiduende",c:500,d:"Pequeño, enclenque y gran artesano.",chg:"Para PAs y Umbral, su Vigor cuenta la mitad (redondeando hacia abajo)."},
+ {id:"semigigante",n:"Semigigante",c:500,d:"Grande, robusto y fuerte.",chg:"+2 a tiradas de Vigor (incluido Ataque Físico). Cada punto de Vigor da 3 PAs en vez de 1."},
+ {id:"semiveela",n:"Semiveela",c:500,d:"Aura sobrenatural de atracción.",chg:"No cambia números de combate. Puede encandilar con Seducción +2 contra la Frialdad del objetivo."}
+];
+const STOPS=[
+ {id:"etapa",n:"Etapa"},{id:"atributos",n:"Atributos"},{id:"habilidades",n:"Habilidades"},
+ {id:"tirada",n:"La tirada"},{id:"combate",n:"Combate"},{id:"modificadores",n:"Lo que modifica"},{id:"ficha",n:"Tu ficha"}
+];
+const RETOS={
+ etapa:{q:"Tu PJ cursa 2º en Hogwarts. ¿Hasta qué nivel pueden llegar sus habilidades?",o:["Experto","Competente","Maestro, si tiene Talentoso"],ok:1,why:"2º curso es Infante, y en Infante ninguna habilidad pasa de Competente. Es el único límite de etapa que no se supera con canjes."},
+ atributos:{q:"Quieres Poder al 3. ¿Qué tienes que canjear?",o:["Solo el nivel 3","Los niveles 1, 2 y 3, uno detrás de otro","El nivel 3 y un Talentoso"],ok:1,why:"Los canjes de atributo son acumulativos: para llegar a 3 pasas por 1 y 2. La página suma el precio por ti (950 grageas en total)."},
+ habilidades:{q:"Experto es el tercer nivel de una habilidad. ¿Cuánto suma a la tirada?",o:["+3","+4","+7"],ok:1,why:"El nivel cuenta puntitos (Experto = 3). El bono es lo que suma (Experto = +4). Algunos arcanos usan el nivel y otros el bono; en la parada de modificadores verás cuál usa cada uno."},
+ tirada:{q:"La dificultad es 9 y tu tirada da 9 justo. ¿Qué pasa?",o:["Fallas por poco","Lo consigues, con 0 grados de éxito","Repites la tirada"],ok:1,why:"Igualar la dificultad ya es superarla. Los grados de éxito empiezan cuando alcanzas la dificultad siguiente (12)."},
+ combate:{q:"Quieres que a tu PJ le cueste más recibir un golpe. ¿Qué subes?",o:["Vigor y Pelea","Destreza y Esquivar","Voluntad y Frialdad"],ok:1,why:"Defensa = 5 + Destreza + Esquivar. Vigor y Pelea mejoran tu Ataque Físico; Voluntad te da PAs y Heridas."},
+ modificadores:{q:"Tienes el Maletín del Pocionista Inquieto y activas Herbivicus. ¿En qué orden se cuenta?",o:["Primero Herbivicus y después se duplica todo","Primero se duplica Poder + Pociones y después se suma Herbivicus","El orden no cambia nada"],ok:1,why:"El Maletín duplica antes de los arcanos. Herbivicus se suma después, así que no se duplica."}
+};
+const GLOSS={
+ pj:["PJ","Personaje Jugador: el tuyo."],
+ pnj:["PNJ","Personaje No Jugador. Lo lleva el master y no tiene Puntos de Destino."],
+ grageas:["Grageas","La moneda del sistema. Con ellas haces los canjes de la ficha. Se ganan roleando, en aventuras, con empleos y con la veteranía."],
+ canje:["Canje","Comprar algo para la ficha con grageas: un atributo, una habilidad, un arcano, una raza…"],
+ atributo:["Atributo","Cómo es tu PJ. Hay 7. Van del 0 al 7, y lo habitual es moverse entre 1 y 4."],
+ habilidad:["Habilidad","Qué sabe hacer tu PJ. Hay 32 y cada una cuelga de un atributo."],
+ nivel:["Nivel","Cuántos puntitos tiene una habilidad: Novato 1, Competente 2, Experto 3, Maestro 4."],
+ bono:["Bono","Lo que la habilidad suma a la tirada: Novato +1, Competente +2, Experto +4, Maestro +7."],
+ limite:["Límite","El techo de tus atributos según la etapa. Más adelante se sube con canjes de veteranía (500 grageas por punto)."],
+ talentoso:["Talentoso","Canje de 1000 grageas que sube el límite de un atributo de 5 a 7 y deja llevar sus habilidades a Maestro. Exige tener todos los límites en 5."],
+ pa:["PAs","Puntos de Aguante: tu cansancio en combate. Mientras te quede alguno, no te pueden derrotar. Perderlos no es estar herido."],
+ umbral:["Umbral de Heridas","Los PAs que tienes que perder de un solo golpe para sufrir una Herida."],
+ heridas:["Heridas","Daño serio. Cada Herida da −1 a todo. Con tantas Heridas como tu valor, caes inconsciente; con 2 más, mueres."],
+ arcano:["Arcano","Hechizo, poción, ritual u objeto canjeado. Doméstico 25, básico 100, intermedio 300, avanzado 600 grageas."],
+ pasivo:["Valor pasivo","5 + Atributo + Habilidad. Es la dificultad que pones a otro PJ que actúa contra ti sin que tú compitas."],
+ grados:["Grados de éxito","Cuántas dificultades por encima de la pedida alcanzaste. Igualar la pedida da 0 grados."],
+ master:["Master","Quien dirige una aventura y decide cuándo hace falta tirar."],
+ escena:["Escena","Un tramo de la aventura. Muchos efectos duran «una escena»."]
+};
+
+/* ---------- ESTADO ---------- */
+function blank(){return{etapa:"adolescente",attrs:{vig:0,des:0,car:0,vol:0,per:0,int:0,pod:0},skills:{},tal:{},arte:"Forja",raza:"humano",lic:false,
+  obj:{carstein:false,warlock:false,maletin:false,bisuteria:false,herbicida:false,vitae:false,solucion:false,altar:false,herbivicus:false},
+  esc:{fuerza:0,actividad:false,edad:0,lobo:false},roll:{sk:"duelo",dif:2,die:null},retos:{},wound:4,ui:{stop:"etapa",fs:17,dots:true,combatOnly:false,open:{pod:true}},example:false}}
+function sample(){const s=blank();s.example=true;s.attrs={vig:1,des:2,car:1,vol:2,per:2,int:2,pod:3};
+  s.skills={duelo:1,esquivar:1,iniciativa:1};return s}
+let S;
+try{S=JSON.parse(localStorage.getItem("tallerFichaAvadense")||"null")}catch(e){S=null}
+if(!S||!S.attrs){S=sample()}else{const b=blank();S=Object.assign(b,S,{obj:Object.assign(b.obj,S.obj||{}),esc:Object.assign(b.esc,S.esc||{}),ui:Object.assign(b.ui,S.ui||{}),roll:Object.assign(b.roll,S.roll||{})})}
+function save(){try{localStorage.setItem("tallerFichaAvadense",JSON.stringify(S))}catch(e){}}
+
+/* ---------- CÁLCULOS ---------- */
+const clone=o=>JSON.parse(JSON.stringify(o));
+function grag(n){const s=String(Math.abs(n)).replace(/\B(?=(\d{3})+(?!\d))/g,".");return (n<0?"−":"")+s}
+function E(st){return ETAPAS.find(e=>e.id===(st||S).etapa)}
+function lvl(st,id){return (st.skills[id]||0)}
+function bono(st,id){return BONO[lvl(st,id)]}
+function attrMax(st,id){const e=E(st);if(st.tal[id])return 7;return e.caps?Math.max(...e.caps):5}
+function skMax(st,id){const e=E(st);const a=SKM[id].a;if(e.id==="infante")return 2;return st.tal[a]?4:3}
+
+function checkCaps(st,vals){const e=E(st);
+  if(!e.caps){for(const a of ATTRS){if(vals[a.id]>attrMax(st,a.id))return false}return true}
+  const v=ATTRS.map(a=>vals[a.id]).sort((x,y)=>y-x);const c=[...e.caps].sort((x,y)=>y-x);
+  return v.every((x,i)=>x<=c[i])}
+function attrReason(st,id,v){const e=E(st);const mx=attrMax(st,id);
+  if(v>mx){if(e.caps)return `En ${e.n} ningún atributo pasa de ${mx}.`;return `Sin Talentoso, el techo es 5. El 6 y el 7 piden Talentoso en ${A[id].n}.`}
+  const top=Math.max(...e.caps);const n=e.caps.filter(c=>c===top).length;
+  return `En ${e.n} solo ${n===1?"puede haber un atributo":"puede haber "+n+" atributos"} en ${top}. Baja otro primero si quieres este.`}
+
+function spent(st){let t=0;const parts={attrs:0,skills:0,raza:0,tal:0};
+  for(const a of ATTRS)parts.attrs+=ACOST[st.attrs[a.id]];
+  for(const s of SK){const l=lvl(st,s.id);parts.skills+=(s.id==="arte"?ARTCOST:SCOST)[l]}
+  parts.raza=(RAZAS.find(r=>r.id===st.raza)||{c:0}).c+(st.lic?150:0);
+  parts.tal=Object.values(st.tal).filter(Boolean).length*1000;
+  t=parts.attrs+parts.skills+parts.raza+parts.tal;return{t,parts}}
+
+function calc(st){
+  const e=E(st);const idx=ETAPAS.indexOf(e);const eb=ETAPAS[Math.max(0,Math.min(5,idx+(+st.esc.edad||0)))];
+  const a=st.attrs;const b=id=>bono(st,id);const n=id=>lvl(st,id);
+  const fz=+st.esc.fuerza||0;const vig=a.vig+fz;
+  const lobo=st.lic&&st.esc.lobo;const gig=st.raza==="semigigante";const due=st.raza==="semiduende";
+  const act=st.esc.actividad?1:0;const war=st.obj.warlock?2:0;const L=lobo?4:0;
+  const ini=a.per+b("iniciativa")+act-war+L;
+  const af=vig+b("pelea")+(gig?2:0)+L;
+  const am=a.pod+b("duelo");
+  const def=5+a.des+b("esquivar")+act-war+L;
+  const lfT=af+def-5+ini, lmT=am+def-5+ini;
+  const lf=Math.floor(lfT/3), lm=Math.floor(lmT/3);
+  const vigEf=due?Math.floor(vig/2):vig;
+  const vigPA=st.obj.carstein?0:vigEf*(gig?3:1);
+  let pa=eb.pa+vigPA+a.vol; const paPre=pa; if(lobo)pa*=2;
+  const umbral=eb.u+vigEf+(lobo?4:0);
+  const heridas=eb.h+a.vol+(lobo?2:0);
+  const potBase=a.pod+b("pociones");const potDup=st.obj.maletin?potBase*2:potBase;
+  const herb=n("herbologia");
+  const pot=potDup+(st.obj.herbicida?herb:0)+(st.obj.vitae?n("rituales"):0)+(st.obj.herbivicus?herb:0);
+  const ritB=b("rituales")*(st.obj.bisuteria?2:1);
+  const altarOK=ALTAR_OK.includes(st.arte);
+  const rit=a.pod+ritB+(st.obj.solucion?b("pociones"):0)+(st.obj.altar&&altarOK?n("arte"):0)-(st.obj.herbivicus?1:0);
+  return{e,eb,vig,fz,lobo,gig,due,act,war,L,ini,af,am,def,lfT,lmT,lf,lm,vigEf,vigPA,pa,paPre,umbral,heridas,potBase,potDup,pot,ritB,rit,altarOK,herb}}
+
+/* ---------- PIEZAS VISUALES ---------- */
+function dots(n,c){if(!S.ui.dots)return"";const m=Math.abs(n);if(m>24)return"";let h="";for(let i=0;i<m;i++)h+=`<i class="dot${n<0?" minus":""}"></i>`;return `<span class="dots" style="--c:${c||"var(--muted)"}">${h}</span>`}
+function tok(label,val,c,neg){return `<span class="tok${neg?" neg":""}" style="--c:${c||"var(--line)"}"><span class="tl">${label}</span><span class="tv">${val}</span>${dots(val,c)}</span>`}
+const op=s=>`<span class="op" aria-hidden="true">${s}</span>`;
+function formula(parts,result,srLabel){let h="";parts.forEach((p,i)=>{if(i>0)h+=op(p.neg?"−":"+");h+=tok(p.l,p.neg?Math.abs(p.v):p.v,p.c,p.neg)});h+=op("=")+`<span class="res" aria-label="${srLabel||"Resultado"}: ${result}">${result}</span>`;return `<div class="formula">${h}</div>`}
+function groups3(total){if(!S.ui.dots||total<0||total>48)return"";const full=Math.floor(total/3),left=total%3;let h="";for(let i=0;i<full;i++)h+=`<span class="grp"><i></i><i></i><i></i></span>`;if(left){let l="";for(let i=0;i<left;i++)l+="<i></i>";h+=`<span class="grp left">${l}</span>`}return `<div class="groups" aria-hidden="true">${h}</div>`}
+const T=(k,txt)=>`<button class="term" data-act="term" data-g="${k}" data-k="term:${k}">${txt||GLOSS[k][0]}</button>`;
+const C=id=>`var(--${id})`;
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function short(items){return `<div class="short"><h3>En corto</h3><ul>${items.map(i=>`<li>${i}</li>`).join("")}</ul></div>`}
+function reto(id){const r=RETOS[id];if(!r)return"";const ans=S.retos[id];let h=`<div class="reto"><p class="eyebrow">Comprueba</p><p class="q">${r.q}</p><div class="answers">`;
+  r.o.forEach((o,i)=>{let cls="";if(ans!==undefined){if(i===r.ok&&ans===r.ok)cls="right";else if(i===ans&&ans!==r.ok)cls="wrong"}
+   h+=`<button class="${cls}" data-act="reto" data-q="${id}" data-i="${i}" data-k="reto:${id}:${i}">${o}</button>`});
+  h+="</div>";if(ans!==undefined){h+=ans===r.ok?`<div class="note ok">${r.why}</div>`:`<div class="note bad">Esa no. Prueba otra opción.</div>`}
+  return h+"</div>"}
+function pager(id){const i=STOPS.findIndex(s=>s.id===id);const p=STOPS[i-1],n=STOPS[i+1];
+  return `<div class="pager">${p?`<button class="btn ghost" data-act="go" data-v="${p.id}" data-k="prev">← ${p.n}</button>`:"<span></span>"}${n?`<button class="btn" data-act="go" data-v="${n.id}" data-k="next">${n.n} →</button>`:""}</div>`}
+function head(id,title){const i=STOPS.findIndex(s=>s.id===id);return `<div class="stop-head"><p class="eyebrow">${i<6?`Parada ${i+1} de 6`:"Resumen"}</p><h2>${title}</h2></div>`}
+function exampleNote(){return S.example?`<div class="note info">Arrancas con una ficha de ejemplo (alumna de 5º curso). Cámbiala a tu gusto, o empieza de cero en «Tu ficha».</div>`:""}
+
+/* ---------- PARADAS ---------- */
+function vEtapa(){const e=E(S);
+  let h=head("etapa","Elige la etapa de tu PJ");
+  h+=short([`La etapa depende de la edad: del curso en Hogwarts o de los años.`,`Decide cuántas ${T("grageas")} tienes para empezar y tus bases de combate.`,`También pone techo a tus ${T("atributo","atributos")} y a tus ${T("habilidad","habilidades")}.`]);
+  h+=`<div class="panel"><div class="cards" role="group" aria-label="Etapas">`;
+  for(const x of ETAPAS)h+=`<button class="card" data-act="etapa" data-v="${x.id}" data-k="etapa:${x.id}" aria-pressed="${x.id===e.id}"><b>${x.n}</b><small>${x.who}</small><span class="g">${grag(x.g)} grageas</span></button>`;
+  h+=`</div><h3>${e.n}: lo que te da</h3><div class="facts">
+   <div class="fact"><span class="k">Grageas iniciales</span><span class="v">${grag(e.g)}</span><span class="d">Para tus primeros canjes.</span></div>
+   <div class="fact"><span class="k">PAs base</span><span class="v">${e.pa}</span><span class="d">Tu aguante antes de sumar Vigor y Voluntad.</span></div>
+   <div class="fact"><span class="k">Umbral de Heridas base</span><span class="v">${e.u}</span><span class="d">Se suma al Vigor.</span></div>
+   <div class="fact"><span class="k">Heridas base</span><span class="v">${e.h}</span><span class="d">Se suma a la Voluntad.</span></div>
+   <div class="fact"><span class="k">Límites de atributos</span><span class="v" style="font-size:1rem">${e.capsTxt}</span><span class="d">${e.caps?"Techo de cada atributo al crear la ficha.":"La tabla no fija reparto; sin Talentoso, el techo es 5."}</span></div>
+   <div class="fact"><span class="k">Habilidades hasta</span><span class="v">${LV[e.maxSk]}</span><span class="d">${e.id==="infante"?"Este límite no se puede superar con canjes.":"Maestro pide Talentoso en su atributo."}</span></div>
+   <div class="fact"><span class="k">Huecos de Talentoso</span><span class="v">${e.tal===null?"—":e.tal}</span><span class="d">${e.tal===null?"La tabla no lo indica para esta etapa.":"Al crear la ficha."}</span></div>
+   <div class="fact"><span class="k">Trasfondos</span><span class="v" style="font-size:1rem">${e.tv}</span><span class="d">Nivel máximo con grageas de etapa.</span></div>
+  </div>`;
+  if(e.capsNote)h+=`<div class="note warn">${e.capsNote}</div>`;
+  h+=`</div><details class="more"><summary>Más detalle</summary><p>Más edad no siempre es más aguante: las bases suben hasta Joven y Adulto (17 PAs) y vuelven a bajar en Experimentado y Veterano. A cambio, las etapas mayores traen muchas más grageas.</p><p>Infante es la etapa recomendada para recién llegados: las aventuras giran alrededor del castillo y el mundo de fuera importa poco.</p><p>Los límites de atributos se pueden ampliar más adelante con la veteranía (cada año en el foro). Las limitaciones de Trasfondos y Ventajas solo cuentan para las grageas de etapa.</p></details>`;
+  return h+reto("etapa")+pager("etapa")}
+
+function vAtributos(){const e=E(S);
+  let h=head("atributos","Reparte tus atributos");
+  h+=short([`Los ${T("atributo","atributos")} dicen cómo es tu PJ. Empiezan en 0.`,`Cada punto se canjea por separado y en orden: para tener un 3 compras el 1, el 2 y el 3.`,`El ${T("limite")} de tu etapa marca hasta dónde llegas.`]);
+  h+=exampleNote();
+  h+=`<div class="panel"><div class="row" style="justify-content:space-between"><h3>Atributos · ${e.n}</h3><span class="hint">Límites: ${e.capsTxt}</span></div>`;
+  if(e.caps){const top=Math.max(...e.caps);const allowed=e.caps.filter(c=>c===top).length;const used=ATTRS.filter(a=>S.attrs[a.id]>=top).length;
+    h+=`<div class="limits"><span class="slot${used>=allowed?" full":""}">Atributos en ${top}: <b>${used}</b> de ${allowed}</span><span class="slot">El resto, hasta ${Math.min(...e.caps)}</span></div>`}
+  if(!checkCaps(S,S.attrs))h+=`<div class="note bad">Con la etapa ${e.n} te pasas de los límites. Baja los atributos marcados para que la ficha sea válida.</div>`;
+  for(const a of ATTRS){const v=S.attrs[a.id];const mx=attrMax(S,a.id);const showMx=Math.max(mx,v);
+    let pips="";for(let k=1;k<=Math.max(5,showMx);k++){const test=Object.assign({},S.attrs,{[a.id]:k});const ok=k<=v||checkCaps(S,test);
+      pips+=`<button class="pip${k<=v?" on":""}${ok?"":" lock"}" data-act="attr" data-id="${a.id}" data-v="${k===v?k-1:k}" data-k="pip:${a.id}:${k}" aria-label="${a.n} a ${k}${ok?"":" (fuera de tu límite)"}">${k}</button>`}
+    const next=v+1;const nextOk=next<=7&&checkCaps(S,Object.assign({},S.attrs,{[a.id]:next}));
+    const talBtn=(e.tal>0)?`<button class="tal" data-act="tal" data-id="${a.id}" data-k="tal:${a.id}" aria-pressed="${!!S.tal[a.id]}" title="Talentoso: 1000 grageas">Talentoso${S.tal[a.id]?" ✓":""}</button>`:"";
+    h+=`<div class="attr" style="--c:${C(a.id)}"><div class="aname"><b>${a.n}</b><small>${a.grp}</small></div>
+     <div class="ctl"><button class="step" data-act="attr" data-id="${a.id}" data-v="${v-1}" data-k="dec:${a.id}" ${v<=0?"disabled":""} aria-label="Bajar ${a.n}">−</button>
+      <span class="val" aria-live="polite">${v}</span>
+      <button class="step" data-act="attr" data-id="${a.id}" data-v="${next}" data-k="inc:${a.id}" ${next>7?"disabled":""} aria-label="Subir ${a.n}">+</button>
+      <span class="pips">${pips}</span>
+      <span class="cost">${next<=7?`siguiente: <b>${ACOST_STEP[next]}</b> g${nextOk?"":" · fuera de límite"}`:""}<br>llevas ${grag(ACOST[v])} g</span>${talBtn}</div>
+     <p class="adesc"><b>${v}:</b> ${a.d[v]}</p></div>`}
+  h+=`<div id="attrMsg"></div></div>`;
+  h+=`<details class="more"><summary>Más detalle</summary><p>Hay dos atributos físicos (Vigor, Destreza), dos sociales (Carisma, Voluntad), dos mentales (Percepción, Inteligencia) y uno mágico (Poder).</p><p>El 6 y el 7 solo se consiguen con ${T("talentoso")}, y el 8 es una Característica Legendaria que pide años en el foro. Lo habitual es moverse entre 1 y 4.</p><p>Precio de cada punto: 1 → 250 · 2 → 300 · 3 → 400 · 4 → 550 · 5 → 750 · 6 → 1000 · 7 → 1300 grageas.</p></details>`;
+  return h+reto("atributos")+pager("atributos")}
+
+function vHabilidades(){const e=E(S);
+  let h=head("habilidades","Elige tus habilidades");
+  h+=short([`Las ${T("habilidad","habilidades")} dicen qué sabe hacer tu PJ. Cada una depende de un atributo.`,`Tienen ${T("nivel","nivel")} (cuántos puntitos) y ${T("bono","bono")} (cuánto suman). No son lo mismo.`,`Solo 4 entran en combate: Iniciativa, Pelea, Esquivar y Duelo.`]);
+  h+=`<div class="panel"><h3>Nivel y bono</h3><div class="ladder-lv">${LV.map((l,i)=>`<div><span class="nv">nivel ${i}</span><b>+${BONO[i]}</b>${l}</div>`).join("")}</div>
+   <p class="hint">Fíjate en el salto: Experto suma +4 y Maestro +7. ${e.id==="infante"?"En Infante el tope es Competente.":"Sin Talentoso, el tope es Experto."}</p></div>`;
+  h+=`<div class="panel"><div class="row" style="justify-content:space-between"><h3>Tus habilidades</h3>
+   <div class="filters"><button class="tool" data-act="filter-combat" data-k="fc" aria-pressed="${S.ui.combatOnly}">Solo las que cambian números</button></div></div>`;
+  const bad=SK.filter(s=>lvl(S,s.id)>skMax(S,s.id));if(bad.length)h+=`<div class="note bad">Con tu etapa te pasas en: ${bad.map(s=>s.n).join(", ")}. Bájalas.</div>`;
+  for(const a of ATTRS){const list=SK.filter(s=>s.a===a.id&&(!S.ui.combatOnly||s.cb));if(!list.length)continue;
+    const trained=list.filter(s=>lvl(S,s.id)>0).length;
+    const open=S.ui.combatOnly||!!(S.ui.open||{})[a.id];
+    h+=`<details class="sgroup" style="--c:${C(a.id)}" data-grp="${a.id}" ${open?"open":""}><summary><b>${a.n}</b><small>${list.length} habilidades · ${trained} entrenadas</small></summary>`;
+    for(const s of list){const l=lvl(S,s.id);const mx=skMax(S,s.id);const cost=s.id==="arte"?ARTCOST:SCOST;
+      let seg="";for(let i=0;i<5;i++){const lock=i>mx;
+        seg+=`<button data-act="skill" data-id="${s.id}" data-v="${i}" data-k="sk:${s.id}:${i}" aria-pressed="${l===i}" class="${lock?"lock":""}" aria-label="${s.n}: ${LV[i]}, bono +${BONO[i]}${lock?" (bloqueado)":""}">${LVs[i]}<span>+${BONO[i]}</span></button>`}
+      h+=`<div class="skill"><div class="sn"><b>${s.n}${s.cb?`<span class="tag">${s.cb}</span>`:""}</b><small>${s.d}${l>0?` · llevas ${cost[l]} g`:""}</small>`;
+      if(s.id==="arte")h+=`<label class="field" style="margin-top:6px"><span class="hint">Especialidad</span><select id="arteSel" data-act="arte" data-k="arte">${["<optgroup label=\"Artes\">"+ARTES.map(x=>`<option${x===S.arte?" selected":""}>${x}</option>`).join("")+"</optgroup>","<optgroup label=\"Artesanías\">"+ARTESANIAS.map(x=>`<option${x===S.arte?" selected":""}>${x}</option>`).join("")+"</optgroup>"].join("")}</select></label>`;
+      h+=`</div><div class="seg-wrap"><div class="seg" role="group" aria-label="${s.n}">${seg}</div></div></div>`}
+    h+=`</details>`}
+  h+=`<div id="skMsg"></div></div>`;
+  h+=`<details class="more"><summary>Más detalle</summary><p>Precio por nivel: Novato 75 · Competente 150 · Experto 250 · Maestro 400 grageas, también acumulativo. Arte / Artesanía cuesta la mitad: 38 · 75 · 125 · 200.</p><p>Lo habitual es tener las habilidades entre Desentrenado y Competente. Los niveles altos están para que tu PJ destaque en lo suyo.</p><p>Con una habilidad también se calcula tu ${T("pasivo")}: 5 + atributo + bono. Por ejemplo, la dificultad para mentirte sin que lo sepas sale de tu Percepción y tu Empatía.</p></details>`;
+  return h+reto("habilidades")+pager("habilidades")}
+
+function vTirada(){const s=SKM[S.roll.sk]||SKM.duelo;const at=A[s.a];const av=S.attrs[s.a];const bv=bono(S,s.id);const dif=DIFS[S.roll.dif];
+  let h=head("tirada","Haz una tirada de prueba");
+  h+=short([`Toda acción con tirada es: dado de 10 caras + atributo + bono de habilidad.`,`Si igualas o superas la dificultad, lo consigues.`,`Lo normal, si el master duda, es Moderada (9).`]);
+  const need=dif[0]-av-bv;
+  h+=`<div class="panel"><div class="row">
+   <div class="field"><label for="rollSk">Habilidad</label><select id="rollSk" data-act="roll-sk" data-k="rollsk">${ATTRS.map(a=>`<optgroup label="${a.n}">${SK.filter(x=>x.a===a.id).map(x=>`<option value="${x.id}"${x.id===s.id?" selected":""}>${x.n} (${LV[lvl(S,x.id)]})</option>`).join("")}</optgroup>`).join("")}</select></div>
+   <div class="field"><label for="rollDif">Dificultad</label><select id="rollDif" data-act="roll-dif" data-k="rolldif">${DIFS.map((d,i)=>`<option value="${i}"${i===S.roll.dif?" selected":""}>${d[1]} (${d[0]})</option>`).join("")}</select></div></div>
+   <div class="need">${need<=1?`Pasas con cualquier resultado del dado. Si no hay presión, el master puede darlo por hecho sin tirar.`:need>10?`Ni con un 10 llegas: te faltan <b>${need-10}</b>. Busca ayuda, un bonificador o una dificultad más baja.`:`Necesitas sacar <b>${need}</b> o más en el dado.`}</div>
+   <div class="roll-grid"><div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+    <div class="die-row"><svg class="die" id="die" viewBox="0 0 100 100" aria-hidden="true"><polygon points="50,4 94,40 50,96 6,40"/><line x1="6" y1="40" x2="94" y2="40"/><line x1="50" y1="4" x2="30" y2="40"/><line x1="50" y1="4" x2="70" y2="40"/><text x="50" y="${S.roll.die===10?67:66}" text-anchor="middle">${S.roll.die??"?"}</text></svg>
+     <div style="display:flex;flex-direction:column;gap:8px"><button class="btn" data-act="roll" data-k="roll">Tirar 1d10</button><span class="hint">o elige el resultado:</span><div class="faces">${[1,2,3,4,5,6,7,8,9,10].map(f=>`<button data-act="die" data-v="${f}" data-k="die:${f}" aria-pressed="${S.roll.die===f}">${f}</button>`).join("")}</div></div></div>`;
+  if(S.roll.die!=null){const tot=S.roll.die+av+bv;
+    h+=formula([{l:"Dado",v:S.roll.die,c:"var(--accent)"},{l:at.n,v:av,c:C(at.id)},{l:`${s.n} (${LV[lvl(S,s.id)]})`,v:bv,c:C(at.id)}],tot,"Total");
+    const ti=S.roll.dif;let verdict;
+    if(tot>=dif[0]){let gr=0;for(let j=ti+1;j<DIFS.length;j++)if(tot>=DIFS[j][0])gr++;
+      verdict=`<div class="note ok verdict">Superas ${dif[1]} (${dif[0]}) con <b>${gr}</b> ${T("grados",gr===1?"grado de éxito":"grados de éxito")}.${gr>0?` Alcanzas también ${DIFS[ti+gr][1]} (${DIFS[ti+gr][0]}).`:""}</div>`}
+    else{let gf=0;for(let j=ti-1;j>=0;j--)if(tot<DIFS[j][0])gf++;
+      verdict=`<div class="note bad verdict">No llegas a ${dif[1]} (${dif[0]}): te faltan ${dif[0]-tot}.${gf>0?` Además quedas por debajo de ${DIFS[ti-gf][1]} (${DIFS[ti-gf][0]}): <b>${gf}</b> ${gf===1?"grado":"grados"} de fracaso.`:" Sin grados de fracaso: pasas la dificultad anterior."}</div>`}
+    h+=verdict}
+  else h+=`<p class="hint">Tira el dado o elige un número para ver la cuenta completa.</p>`;
+  h+=`</div><div><p class="subh">Escalera de dificultades</p><div class="ladder">`;
+  const tot=S.roll.die!=null?S.roll.die+av+bv:null;
+  DIFS.forEach((d,i)=>{const cls=[tot!=null&&tot>=d[0]?"reach":tot!=null?"miss":"",i===S.roll.dif?"target":""].join(" ");h+=`<div class="rung ${cls}"><b>${d[0]}</b><span>${d[1]}</span></div>`});
+  h+=`</div></div></div></div>`;
+  h+=`<details class="more"><summary>Más detalle</summary><p>Tipos de acción: automática (sin tirada), simple (contra una dificultad), enfrentada (contra otro PJ: gana el resultado más alto) y grupal (uno tira y cada PJ que apoya da +1, hasta +3).</p><p>Los modificadores del entorno son pequeños (±1), normales (±2) o grandes (±4). Sumados, los bonificadores externos no pasan de +7.</p><p>Si estás en calma y fallar no tiene consecuencias, el master puede asumir éxito como si sacaras un 10. Nunca en dificultades Épica o Imposible.</p></details>`;
+  return h+reto("tirada")+pager("tirada")}
+
+function vCombate(){const c=calc(S);const a=S.attrs;
+  let h=head("combate","Tus valores de combate");
+  h+=short([`Salen solos de tus atributos y habilidades. No se canjean aparte.`,`Atacas con Ataque Físico o Mágico contra la Defensa del rival.`,`Los ${T("pa","PAs")} son cansancio; las ${T("heridas","Heridas")} son daño de verdad.`]);
+  const mods=[];if(c.act)mods.push({l:"Poción de actividad",v:1,c:"var(--ok)"});if(c.war)mods.push({l:"Armadura de Warlock",v:-2,neg:true,c:"var(--bad)"});if(c.L)mods.push({l:"Lobo transformado",v:4,c:"var(--ok)"});
+  const card=(t,sub,body,why)=>`<div class="cval"><div class="cval-h"><h4>${t}</h4><small>${sub}</small></div>${body}${why?`<p class="why">${why}</p>`:""}</div>`;
+  h+=`<div class="panel"><h3>Ataque, defensa y velocidad</h3><div class="cgrid">`;
+  h+=card("Iniciativa","Percepción + Iniciativa",formula([{l:"Percepción",v:a.per,c:C("per")},{l:"Iniciativa",v:bono(S,"iniciativa"),c:C("per")},...mods],c.ini,"Iniciativa"),"Quién actúa primero. Cada 2 puntos de ventaja sobre tu objetivo dan +1 al efecto de tu ataque.");
+  const afp=[{l:"Vigor",v:a.vig,c:C("vig")}];if(c.fz)afp.push({l:"Poción de fuerza",v:c.fz,c:"var(--ok)"});afp.push({l:"Pelea",v:bono(S,"pelea"),c:C("vig")});if(c.gig)afp.push({l:"Semigigante",v:2,c:"var(--ok)"});if(c.L)afp.push({l:"Lobo",v:4,c:"var(--ok)"});
+  h+=card("Ataque Físico","Vigor + Pelea",formula(afp,c.af,"Ataque Físico"),"Para golpes y armas.");
+  h+=card("Ataque Mágico","Poder + Duelo",formula([{l:"Poder",v:a.pod,c:C("pod")},{l:"Duelo",v:bono(S,"duelo"),c:C("pod")}],c.am,"Ataque Mágico"),"Para hechizos.");
+  h+=card("Defensa","5 + Destreza + Esquivar",formula([{l:"Base fija",v:5,c:"var(--muted)"},{l:"Destreza",v:a.des,c:C("des")},{l:"Esquivar",v:bono(S,"esquivar"),c:C("des")},...mods],c.def,"Defensa"),"Lo que el rival tiene que igualar para acertarte, sea magia o golpe.");
+  h+=`</div></div>`;
+  const lucha=(t,atkL,atk,tot,res)=>card(t,"(Ataque + Defensa − 5 + Iniciativa) ÷ 3",formula([{l:atkL,v:atk,c:"var(--accent)"},{l:"Defensa",v:c.def,c:C("des")},{l:"menos 5",v:5,neg:true,c:"var(--muted)"},{l:"Iniciativa",v:c.ini,c:C("per")}],tot,"Suma")+`<div><p><b>${tot}</b> repartido en 3 grupos da <b>${res}</b>${tot%3?`; sobran ${tot%3} y se descartan (siempre se redondea hacia abajo)`:""}.</p>${groups3(tot)}<div class="formula" style="margin-top:8px">${tok("Suma",tot,"var(--line)")}${op("÷")}${tok("grupos",3,"var(--line)")}${op("=")}<span class="res">${res}</span></div></div>`,"");
+  h+=`<div class="panel"><h3>Lucha: el combate rápido</h3><p class="hint">Muchos combates del foro se resuelven con una sola tirada enfrentada. Ahí se usa este valor en vez de turno a turno.</p><div class="cgrid">`;
+  h+=lucha("Lucha Física","Ataque Físico",c.af,c.lfT,c.lf);
+  h+=lucha("Lucha Mágica","Ataque Mágico",c.am,c.lmT,c.lm);
+  h+=`</div></div>`;
+  const vigLabel=c.due?"Vigor ÷ 2":"Vigor";
+  const pap=[{l:`PAs base (${c.eb.n})`,v:c.eb.pa,c:"var(--muted)"},{l:c.gig?"Vigor × 3":(S.obj.carstein?"Vigor (Anillo: 0)":vigLabel),v:c.vigPA,c:C("vig")},{l:"Voluntad",v:a.vol,c:C("vol")}];
+  h+=`<div class="panel"><h3>Aguante y Heridas</h3><div class="cgrid">`;
+  h+=card(`Puntos de Aguante (${GLOSS.pa[0]})`,"Base + Vigor + Voluntad",formula(pap,c.paPre,"PAs")+(c.lobo?`<p>Transformado en lobo se duplican: <b>${c.pa}</b>.</p>`:""),"Mientras te quede alguno, no te pueden derrotar. Al descansar tras el combate los recuperas.");
+  h+=card("Umbral de Heridas","Base + Vigor",formula([{l:"Umbral base",v:c.eb.u,c:"var(--muted)"},{l:vigLabel,v:c.vigEf,c:C("vig")},...(c.lobo?[{l:"Lobo",v:4,c:"var(--ok)"}]:[])],c.umbral,"Umbral"),`Un solo golpe de ${c.umbral} PAs o más te deja una Herida. Por debajo de 0 PAs basta con acumular ${Math.ceil(c.umbral/2)} (la mitad, redondeando hacia arriba).`);
+  h+=card("Heridas","Base + Voluntad",formula([{l:"Heridas base",v:c.eb.h,c:"var(--muted)"},{l:"Voluntad",v:a.vol,c:C("vol")},...(c.lobo?[{l:"Lobo",v:2,c:"var(--ok)"}]:[])],c.heridas,"Heridas"),`Con ${c.heridas} Heridas caes inconsciente; con ${c.heridas+2}, tu PJ muere. Cada Herida da −1 a todas tus tiradas y valores.`);
+  h+=`</div>`;
+  const w=Math.max(1,Math.min(40,S.wound||1));
+  h+=`<div class="wound"><p class="subh">Prueba: un golpe cuando aún te quedan PAs</p><label for="woundR">Mueve la barra: cuántos PAs te quita el rival de un solo golpe</label><input type="range" id="woundR" min="1" max="40" value="${w}" data-act="wound" data-k="wound">
+    <div id="woundOut">${woundHTML(w,c.umbral)}</div></div></div>`;
+  h+=`<details class="more"><summary>Más detalle</summary><p>Si tu Ataque iguala la Defensa del rival, haces el efecto base del hechizo o arma. Cada punto por encima suma +1 al efecto, hasta el doble.</p><p>Si tu Ataque queda por debajo, el rival hace una Contra: con 1 punto de diferencia te devuelve el 25 %, con 2 el 50 %, con 3 el 75 % y con 4 o más, todo.</p><p>Las Heridas se pueden estabilizar (quitas el −1 pero sigue contando para caer inconsciente) o curar del todo (unas seis horas de atención).</p></details>`;
+  return h+reto("combate")+pager("combate")}
+
+function deltaChips(mut){const st=clone(S);mut(st);return deltaHTML(calc(S),calc(st))}
+function woundHTML(w,u){const nh=Math.floor(w/u);return `<p>Golpe de <b>${w}</b> PAs.</p><div class="note ${nh?"bad":"ok"}">${nh?`Con tu Umbral de ${u}, ese golpe te causa <b>${nh}</b> ${nh===1?"Herida":"Heridas"}${nh>1?` (tu Umbral cabe ${nh} veces en el golpe)`:""}.`:`Ese golpe no llega a tu Umbral (${u}): solo pierdes PAs, sin Herida.`}</div>`}
+function deltaHTML(before,after){
+  const keys=[["ini","Iniciativa"],["af","At. Físico"],["am","At. Mágico"],["def","Defensa"],["lf","Lucha F."],["lm","Lucha M."],["pa","PAs"],["umbral","Umbral"],["heridas","Heridas"],["pot","Pt. Pociones"],["rit","Pt. Rituales"]];
+  const ch=keys.filter(([k])=>before[k]!==after[k]).map(([k,n])=>`<span class="${after[k]>before[k]?"up":"down"}">${n}: ${before[k]} → ${after[k]}</span>`);
+  return ch.length?`<div class="delta">${ch.join("")}</div>`:`<div class="delta"><span>Con tu ficha actual no cambia ningún número</span></div>`}
+function opt(id,name,desc,src,on,mut,disabled,dis){return `<div class="opt"><button class="sw" data-act="${id.split(":")[0]}" data-id="${id.split(":")[1]}" data-k="${id}" aria-pressed="${on}" aria-label="${name}" ${disabled?"disabled":""}></button><div><b>${name}</b><p class="od">${desc}</p>${dis?`<p class="od" style="color:var(--warn)">${dis}</p>`:""}${deltaChips(mut)}<p class="src">${src}</p></div></div>`}
+
+function vModificadores(){const c=calc(S);
+  let h=head("modificadores","Lo que modifica tus números");
+  h+=short([`La raza, algunos objetos, pociones y ${T("arcano","arcanos")} cambian tus valores.`,`Activa cada uno y mira qué número sube o baja. Nada se mueve por sorpresa.`,`La raza se elige al crear la ficha; después ya no se puede (salvo la licantropía).`]);
+  h+=`<div class="panel"><h3>Raza</h3><div class="race" role="group" aria-label="Raza">`;
+  for(const r of RAZAS)h+=`<button class="card" data-act="raza" data-v="${r.id}" data-k="raza:${r.id}" aria-pressed="${S.raza===r.id}"><b>${r.n}</b><small>${r.d}</small><span class="chg">${r.chg}</span><span class="g">${r.c?r.c+" grageas":"Gratis"}</span></button>`;
+  h+=`</div>`;
+  if(S.raza!=="humano"){const r=RAZAS.find(x=>x.id===S.raza);const hu=clone(S);hu.raza="humano";h+=`<p class="hint">${r.n} frente a humano, con tu ficha actual:</p>`+deltaHTML(calc(hu),calc(S))}
+  h+=opt("lic:x","Licantropía (150 grageas)","Se puede adquirir más adelante. Transformado: +4 a Ataque Físico, Iniciativa y Defensa; PAs × 2; Umbral +4; +2 Heridas. En luna llena el master toma tu PJ salvo que tengas Matalobos.","Fuente: Las Razas.",S.lic,st=>{st.lic=!S.lic;if(!st.lic)st.esc.lobo=false});
+  if(S.lic)h+=opt("esc:lobo","Transformado ahora (escena)","Solo durante la transformación.","Fuente: Las Razas.",S.esc.lobo,st=>{st.esc.lobo=!S.esc.lobo});
+  h+=`</div>`;
+  h+=`<div class="panel"><h3>Objetos que llevas</h3>`;
+  h+=opt("obj:carstein","Anillo de los Carstein","Los PAs que te da el Vigor pasan a 0. Tus PAs quedan en base + Voluntad. Si mueres por heridas llevándolo, cura una Herida.","Fuente: Objetos.",S.obj.carstein,st=>{st.obj.carstein=!S.obj.carstein});
+  h+=opt("obj:warlock","Armadura de Warlock","−2 a Iniciativa y Defensa mientras la llevas. A cambio reduce el daño recibido (hasta 4, o 7 si no es mágico); eso no aparece aquí.","Fuente: Objetos.",S.obj.warlock,st=>{st.obj.warlock=!S.obj.warlock});
+  h+=`</div>`;
+  h+=`<div class="panel"><h3>Pociones bebidas (duran la escena)</h3>
+   <div class="row"><div class="field"><label for="fzSel">Poción de fuerza</label><select id="fzSel" data-act="fuerza" data-k="fz"><option value="0"${S.esc.fuerza==0?" selected":""}>Ninguna</option><option value="1"${S.esc.fuerza==1?" selected":""}>Culturista (+1 Vigor)</option><option value="2"${S.esc.fuerza==2?" selected":""}>Semigigante (+2 Vigor)</option><option value="3"${S.esc.fuerza==3?" selected":""}>Gigante (+3 Vigor)</option></select></div>
+   <div class="field"><label for="edSel">Poción de edad</label><select id="edSel" data-act="edad" data-k="ed"><option value="-2"${S.esc.edad==-2?" selected":""}>Rejuvenecedora: 2 etapas menos</option><option value="-1"${S.esc.edad==-1?" selected":""}>Rejuvenecedora: 1 etapa menos</option><option value="0"${S.esc.edad==0?" selected":""}>Ninguna</option><option value="1"${S.esc.edad==1?" selected":""}>Envejecedora: 1 etapa más</option><option value="2"${S.esc.edad==2?" selected":""}>Envejecedora: 2 etapas más</option></select></div></div>
+   <p class="hint">La de fuerza sube el Vigor de la escena: mueve Umbral, Ataque Físico, PAs y Lucha Física. La de edad cambia las bases de PAs, Umbral y Heridas por las de otra etapa${S.esc.edad!=0?`: ahora usas las de <b>${c.eb.n}</b>`:""}.</p>`;
+  h+=opt("esc:actividad","Poción de actividad","+1 a Defensa e Iniciativa durante la escena.","Fuente: Pociones, básicas.",S.esc.actividad,st=>{st.esc.actividad=!S.esc.actividad});
+  h+=`</div>`;
+  /* Pociones y rituales */
+  const herb=lvl(S,"herbologia"),ritN=lvl(S,"rituales"),artN=lvl(S,"arte");
+  h+=`<div class="panel"><h3>Puntos de Pociones y de Rituales</h3><p class="hint">Son tu «gasolina» por aventura: cuántas pociones y rituales puedes usar. Base: Poder + ${T("bono")} de la habilidad. Ojo: cada arcano dice si suma tu <b>nivel</b> o tu <b>bono</b>.</p>`;
+  const pp=[{l:"Poder",v:S.attrs.pod,c:C("pod")},{l:`Pociones (${LV[lvl(S,"pociones")]})`,v:bono(S,"pociones"),c:C("pod")}];
+  h+=`<div class="cval"><div class="cval-h"><h4>Puntos de Pociones</h4><small>Poder + Pociones (+ arcanos)</small></div>${formula(pp,c.potBase,"Base")}`;
+  if(S.obj.maletin)h+=`<div class="formula">${tok("Base",c.potBase,"var(--line)")}${op("×")}${tok("Maletín",2,"var(--ok)")}${op("=")}<span class="res">${c.potDup}</span></div>`;
+  const extra=[];if(S.obj.herbicida)extra.push({l:`Herbicida (nivel Herbología)`,v:herb,c:C("int")});if(S.obj.vitae)extra.push({l:`Planta Vitae (nivel Rituales)`,v:ritN,c:C("pod")});if(S.obj.herbivicus)extra.push({l:`Herbivicus (nivel Herbología)`,v:herb,c:C("int")});
+  if(extra.length)h+=formula([{l:S.obj.maletin?"Tras el Maletín":"Base",v:c.potDup,c:"var(--accent)"},...extra],c.pot,"Puntos de Pociones");
+  h+=`</div>`;
+  const rp=[{l:"Poder",v:S.attrs.pod,c:C("pod")},{l:S.obj.bisuteria?`Rituales × 2 (Bisutería)`:`Rituales (${LV[ritN]})`,v:c.ritB,c:C("pod")}];
+  if(S.obj.solucion)rp.push({l:"Solución (bono Pociones)",v:bono(S,"pociones"),c:C("pod")});
+  if(S.obj.altar)rp.push({l:`Altar (nivel ${S.arte})`,v:c.altarOK?artN:0,c:C("vol")});
+  if(S.obj.herbivicus)rp.push({l:"Herbivicus bloquea",v:1,neg:true,c:"var(--bad)"});
+  h+=`<div class="cval"><div class="cval-h"><h4>Puntos de Rituales</h4><small>Poder + Rituales (+ arcanos)</small></div>${formula(rp,c.rit,"Puntos de Rituales")}</div>`;
+  h+=`<p class="subh">Arcanos de Pociones</p>`;
+  h+=opt("obj:herbicida","Poción herbicida","Suma tu NIVEL en Herbología (1 Novato · 2 Competente · 3 Experto · 4 Maestro).","Fuente: Pociones, básicas.",S.obj.herbicida,st=>{st.obj.herbicida=!S.obj.herbicida},false,herb?"":"Ahora suma 0: no tienes Herbología.");
+  h+=opt("obj:vitae","Planta Vitae (ritual)","Suma a Pociones tu NIVEL en Rituales (1 · 2 · 3 · 4).","Fuente: Rituales, intermedios.",S.obj.vitae,st=>{st.obj.vitae=!S.obj.vitae},false,ritN?"":"Ahora suma 0: no tienes Rituales.");
+  h+=`<p class="subh">Arcanos de Rituales</p>`;
+  h+=opt("obj:solucion","Solución del ritualista (poción)","Suma a Rituales tu BONO en Pociones (+1 · +2 · +4 · +7).","Fuente: Pociones, intermedias.",S.obj.solucion,st=>{st.obj.solucion=!S.obj.solucion});
+  h+=opt("obj:altar","Altar del ritualista","Suma a Rituales tu NIVEL en la Artesanía con que lo construyes: Albañilería, Alfarería, Carpintería, Forja o Ingeniería.","Fuente: Objetos, avanzados.",S.obj.altar,st=>{st.obj.altar=!S.obj.altar},false,c.altarOK?(artN?"":"Ahora suma 0: no tienes nivel en Arte / Artesanía."):`Tu especialidad es ${S.arte}: no sirve para el Altar. Cámbiala en Habilidades.`);
+  h+=`<p class="subh">Efectos especiales</p>`;
+  h+=opt("obj:maletin","Maletín del Pocionista Inquieto","Duplica Poder + Pociones ANTES de sumar los arcanos.","Fuente: Objetos, avanzados.",S.obj.maletin,st=>{st.obj.maletin=!S.obj.maletin});
+  h+=opt("obj:herbivicus","Herbivicus (activo)","Suma tu NIVEL de Herbología a Pociones. A cambio bloquea 1 Punto de Rituales durante la aventura en que lo declaras; no se descuenta para siempre.","Fuente: Rituales, básicos.",S.obj.herbivicus,st=>{st.obj.herbivicus=!S.obj.herbivicus},false,herb?"":"Ahora suma 0: no tienes Herbología.");
+  h+=opt("obj:bisuteria","Bisutería Arcana","Duplica tu bono de Rituales dentro de la suma: Poder + Rituales × 2.","Fuente: Objetos, intermedios.",S.obj.bisuteria,st=>{st.obj.bisuteria=!S.obj.bisuteria});
+  h+=`</div>`;
+  h+=`<details class="more"><summary>Más detalle</summary><p>Precio de los arcanos: doméstico 25, básico 100, intermedio 300, avanzado 600 grageas. Para cada intermedio necesitas al menos un básico, y para cada avanzado al menos un intermedio, dentro del mismo tipo (pociones con pociones, rituales con rituales). Los objetos se compran en cualquier orden.</p><p>El contador de grageas de esta página solo suma atributos, habilidades, raza y Talentosos. Los arcanos y objetos se canjean aparte.</p></details>`;
+  return h+reto("modificadores")+pager("modificadores")}
+
+function bbcode(){const c=calc(S);const e=c.e;const L=[];const col=t=>`[color=#7c623e]${t}[/color]`;
+  L.push(`${col("▋ Atributos:")} (Límites: ${e.capsTxt})`);
+  for(const a of ATTRS)L.push(`${col(`→ ${a.n}:`)} ${S.attrs[a.id]}`);
+  L.push("");L.push(col("▋ Habilidades:"));
+  for(const a of ATTRS){const list=SK.filter(s=>s.a===a.id);
+    const lines=list.map(s=>`${col(`→ ${s.id==="arte"?`Arte / Artesanía (${S.arte})`:s.bb}:`)} ${LV[lvl(S,s.id)]} (+${bono(S,s.id)})`);
+    L.push(`[spoiler=${a.up}]${lines.join("\n")}[/spoiler]`)}
+  L.push("");L.push(col("▋ Combate:"));
+  L.push(`${col("→ Iniciativa:")} ${c.ini}`);L.push(`${col("→ Ataque Físico:")} ${c.af}`);L.push(`${col("→ Lucha Física:")} ${c.lf}`);
+  L.push(`${col("→ Ataque Mágico:")} ${c.am}`);L.push(`${col("→ Lucha Mágica:")} ${c.lm}`);L.push(`${col("→ Defensa:")} ${c.def}`);
+  L.push(`${col("→ PAs:")} ${c.pa}`);L.push(`${col("→ Umbral de heridas:")} ${c.umbral}`);L.push(`${col("→ Heridas:")} ${c.heridas}`);
+  L.push("");L.push(`${col("▋ Puntos de Pociones:")} ${c.pot}`);L.push(`${col("▋ Puntos de Rituales:")} ${c.rit}`);
+  L.push(`${col("▋ Puntos de Destino:")} 1`);L.push(`${col("▋ Pérdida de Puntos de Destino:")} -`);
+  return L.join("\n")}
+
+function vFicha(){const c=calc(S);const sp=spent(S);const e=c.e;const left=e.g-sp.t;
+  let h=head("ficha","Tu ficha");
+  h+=`<div class="panel"><h3>Grageas</h3><div class="bar${left<0?" over":""}"><i style="width:${Math.min(100,sp.t/e.g*100)}%"></i></div>
+   <p class="gtxt">Gastas <b>${grag(sp.t)}</b> de ${grag(e.g)}. ${left>=0?`Te quedan <b>${grag(left)}</b>.`:`<span style="color:var(--bad)">Te pasas por <b>${grag(-left)}</b>.</span>`}</p>
+   <div class="sum"><div><small>Atributos</small><b>${grag(sp.parts.attrs)}</b></div><div><small>Habilidades</small><b>${grag(sp.parts.skills)}</b></div><div><small>Raza y licantropía</small><b>${grag(sp.parts.raza)}</b></div>${sp.parts.tal?`<div><small>Talentosos</small><b>${grag(sp.parts.tal)}</b></div>`:""}</div>
+   <p class="hint">Arcanos, objetos, trasfondos, idiomas, especializaciones y talentos se canjean aparte y no entran en esta cuenta.</p></div>`;
+  const issues=[];if(!checkCaps(S,S.attrs))issues.push("Algún atributo pasa del límite de tu etapa.");
+  const bad=SK.filter(s=>lvl(S,s.id)>skMax(S,s.id));if(bad.length)issues.push(`Habilidades por encima del tope: ${bad.map(s=>s.n).join(", ")}.`);
+  if(left<0)issues.push("Gastas más grageas de las que tienes.");
+  if(e.tal!==null&&Object.values(S.tal).filter(Boolean).length>e.tal)issues.push("Demasiados Talentosos para tu etapa.");
+  h+=issues.length?`<div class="note bad">${issues.join(" ")}</div>`:`<div class="note ok">La ficha respeta los límites de ${e.n} y el presupuesto.</div>`;
+  h+=`<div class="panel"><h3>Valores de combate</h3><div class="sum">${[["Iniciativa",c.ini],["Ataque Físico",c.af],["Ataque Mágico",c.am],["Defensa",c.def],["Lucha Física",c.lf],["Lucha Mágica",c.lm],["PAs",c.pa],["Umbral",c.umbral],["Heridas",c.heridas],["Pt. Pociones",c.pot],["Pt. Rituales",c.rit]].map(([k,v])=>`<div><small>${k}</small><b>${v}</b></div>`).join("")}</div>
+   ${(S.esc.fuerza|0)||S.esc.actividad||S.esc.lobo||S.esc.edad!=0?`<div class="note warn">Hay efectos de escena activos (pociones o transformación). Desactívalos en «Lo que modifica» antes de copiar la ficha.</div>`:""}</div>`;
+  h+=`<div class="panel"><h3>Copiar a la ficha del foro</h3><p class="hint">Es el bloque de la pestaña «Caract.» de la plantilla oficial, ya relleno. Pégalo en su sitio.</p>
+   <textarea class="bb" id="bb" readonly aria-label="BBCode de la ficha">${esc(bbcode())}</textarea>
+   <div class="row"><button class="btn" data-act="copy" data-k="copy">Copiar BBCode</button><span class="hint" id="copyMsg" aria-live="polite"></span></div></div>`;
+  h+=`<div class="panel"><h3>Empezar otra vez</h3><div class="row"><button class="btn ghost" data-act="reset-zero" data-k="rz">Ficha en blanco</button><button class="btn ghost" data-act="reset-sample" data-k="rs">Volver al ejemplo</button></div><p class="hint">Tu ficha se guarda solo en este navegador.</p></div>`;
+  return h+pager("ficha")}
+
+/* ---------- FICHA LATERAL Y BARRA ---------- */
+function vSheet(){const c=calc(S);const sp=spent(S);const e=c.e;const left=e.g-sp.t;
+  return `<h3>Ficha en vivo</h3><p class="hint">${e.n} · ${(RAZAS.find(r=>r.id===S.raza)||{}).n}${S.lic?" · licántropo":""}</p>
+  <div class="bar${left<0?" over":""}"><i style="width:${Math.min(100,sp.t/e.g*100)}%"></i></div>
+  <p class="gtxt">${left>=0?`Quedan <b>${grag(left)}</b> de ${grag(e.g)} grageas`:`<span style="color:var(--bad)">Te pasas por <b>${grag(-left)}</b></span>`}</p>
+  <div class="kv">${ATTRS.map(a=>`<span style="color:${C(a.id)};font-weight:700">${a.n}</span><span>${S.attrs[a.id]}</span>`).join("")}</div>
+  <p class="subh">Combate</p>
+  <div class="kv"><span>Iniciativa</span><span>${c.ini}</span><span>Ataque Físico</span><span>${c.af}</span><span>Ataque Mágico</span><span>${c.am}</span><span>Defensa</span><span>${c.def}</span><span>Lucha Física</span><span>${c.lf}</span><span>Lucha Mágica</span><span>${c.lm}</span><span>PAs</span><span>${c.pa}</span><span>Umbral</span><span>${c.umbral}</span><span>Heridas</span><span>${c.heridas}</span><span>Pt. Pociones</span><span>${c.pot}</span><span>Pt. Rituales</span><span>${c.rit}</span></div>`}
+function vMbar(){const sp=spent(S);const e=E(S);const left=e.g-sp.t;
+  return `<div class="bar${left<0?" over":""}" aria-hidden="true"><i style="width:${Math.min(100,sp.t/e.g*100)}%"></i></div><span class="gtxt">${left>=0?`<b>${grag(left)}</b> g libres`:`<b style="color:var(--bad)">−${grag(-left)}</b> g`}</span><a href="#ficha" data-act="go" data-v="ficha">Ver ficha</a>`}
+
+/* ---------- RENDER ---------- */
+const VIEWS={etapa:vEtapa,atributos:vAtributos,habilidades:vHabilidades,tirada:vTirada,combate:vCombate,modificadores:vModificadores,ficha:vFicha};
+function renderRoute(){document.getElementById("route").innerHTML=STOPS.map((s,i)=>`<li><a href="#${s.id}" data-act="go" data-v="${s.id}" data-k="route:${s.id}" ${S.ui.stop===s.id?'aria-current="step"':""} class="${RETOS[s.id]&&S.retos[s.id]===RETOS[s.id].ok?"done":""}"><span class="n">${i<6?(S.retos[s.id]===RETOS[s.id].ok?"✓":i+1):"★"}</span>${s.n}</a></li>`).join("")}
+function render(keepFocus){const k=keepFocus&&document.activeElement&&document.activeElement.dataset?document.activeElement.dataset.k:null;
+  document.documentElement.style.setProperty("--fs",S.ui.fs+"px");
+  document.getElementById("main").classList.toggle("nodots",!S.ui.dots);
+  document.getElementById("dotsBtn").setAttribute("aria-pressed",String(S.ui.dots));
+  renderRoute();
+  document.getElementById("stops").innerHTML=`<section class="stop" id="s-${S.ui.stop}">${VIEWS[S.ui.stop]()}</section>`;
+  document.getElementById("sheet").innerHTML=vSheet();
+  document.getElementById("mbar").innerHTML=vMbar();
+  if(k){const el=document.querySelector(`[data-k="${CSS.escape(k)}"]`);if(el)el.focus({preventScroll:true})}
+  save()}
+function go(id){if(!VIEWS[id])return;S.ui.stop=id;render();try{history.replaceState(null,"","#"+id)}catch(e){}const t=document.getElementById("stops");const y=t.getBoundingClientRect().top+window.scrollY-20;if(window.scrollY>y)window.scrollTo({top:y,behavior:"smooth"})}
+
+function flash(id,msg){const el=document.getElementById(id);if(el)el.innerHTML=`<div class="note warn">${msg}</div>`}
+
+/* ---------- EVENTOS ---------- */
+document.addEventListener("click",ev=>{const t=ev.target.closest("[data-act]");if(!t)return;const act=t.dataset.act,id=t.dataset.id,v=t.dataset.v;
+  if(t.tagName==="SELECT"||t.type==="range")return;
+  if(act==="go"){ev.preventDefault();go(v);return}
+  if(act==="term"){const gl=GLOSS[t.dataset.g];const box=document.getElementById("gloss");box.innerHTML=`<div><b>${gl[0]}</b>${gl[1]}</div><button data-act="gclose" data-k="gclose">Cerrar</button>`;box.hidden=false;box.querySelector("button").focus();return}
+  if(act==="gclose"){document.getElementById("gloss").hidden=true;return}
+  if(act==="font"){S.ui.fs=Math.max(14,Math.min(22,S.ui.fs+(+v)));render(true);return}
+  if(act==="dots"){S.ui.dots=!S.ui.dots;render(true);return}
+  if(act==="etapa"){S.etapa=v;S.example=false;if(E(S).tal<=0){S.tal={}}render(true);return}
+  if(act==="attr"){const nv=+v;if(nv<0||nv>7)return;const test=Object.assign({},S.attrs,{[id]:nv});
+    if(nv>S.attrs[id]&&!checkCaps(S,test)){flash("attrMsg",attrReason(S,id,nv));return}
+    S.attrs[id]=nv;S.example=false;render(true);return}
+  if(act==="tal"){const e=E(S);if(S.tal[id]){delete S.tal[id];if(S.attrs[id]>5)S.attrs[id]=5;for(const s of SK)if(s.a===id&&lvl(S,s.id)>3)S.skills[s.id]=3}
+    else{const n=Object.values(S.tal).filter(Boolean).length;if(n>=e.tal){flash("attrMsg",`${e.n} tiene ${e.tal} huecos de Talentoso y ya los usas todos.`);return}S.tal[id]=true}
+    render(true);return}
+  if(act==="skill"){const nv=+v;const mx=skMax(S,id);if(nv>mx){const e=E(S);flash("skMsg",e.id==="infante"?"En Infante ninguna habilidad pasa de Competente.":`Maestro pide Talentoso en ${A[SKM[id].a].n}.${e.tal>0?" Puedes marcarlo en la parada de Atributos.":""}`);return}
+    S.skills[id]=nv;S.example=false;S.ui.open=S.ui.open||{};S.ui.open[SKM[id].a]=true;render(true);return}
+  if(act==="filter-combat"){S.ui.combatOnly=!S.ui.combatOnly;render(true);return}
+  if(act==="roll"){S.roll.die=1+Math.floor(Math.random()*10);render(true);const d=document.getElementById("die");if(d){d.classList.remove("spin");void d.getBoundingClientRect();d.classList.add("spin")}return}
+  if(act==="die"){S.roll.die=+v;render(true);return}
+  if(act==="reto"){S.retos[t.dataset.q]=+t.dataset.i;render(true);return}
+  if(act==="raza"){S.raza=v;render(true);return}
+  if(act==="lic"){S.lic=!S.lic;if(!S.lic)S.esc.lobo=false;render(true);return}
+  if(act==="obj"){S.obj[id]=!S.obj[id];render(true);return}
+  if(act==="esc"){S.esc[id]=!S.esc[id];render(true);return}
+  if(act==="copy"){const ta=document.getElementById("bb");const txt=ta.value;const msg=document.getElementById("copyMsg");
+    const fallback=()=>{ta.focus();ta.select();msg.textContent="Texto seleccionado: cópialo con Ctrl+C (o mantén pulsado en el móvil)."};
+    try{navigator.clipboard.writeText(txt).then(()=>{msg.textContent="Copiado."}).catch(fallback)}catch(e){fallback()}return}
+  if(act==="reset-zero"){const ui=S.ui,retos=S.retos;S=blank();S.ui=ui;S.retos=retos;S.ui.stop="etapa";render();go("etapa");return}
+  if(act==="reset-sample"){const ui=S.ui,retos=S.retos;S=sample();S.ui=ui;S.retos=retos;render(true);return}
+});
+document.addEventListener("toggle",ev=>{const d=ev.target;if(d.classList&&d.classList.contains("sgroup")&&!S.ui.combatOnly){S.ui.open=S.ui.open||{};S.ui.open[d.dataset.grp]=d.open;save()}},true);
+document.addEventListener("change",ev=>{const t=ev.target;const act=t.dataset&&t.dataset.act;if(!act)return;
+  if(act==="arte"){S.arte=t.value;render(true)}
+  else if(act==="roll-sk"){S.roll.sk=t.value;render(true)}
+  else if(act==="roll-dif"){S.roll.dif=+t.value;render(true)}
+  else if(act==="fuerza"){S.esc.fuerza=+t.value;render(true)}
+  else if(act==="edad"){S.esc.edad=+t.value;render(true)}
+});
+document.addEventListener("input",ev=>{const t=ev.target;if(t.dataset&&t.dataset.act==="wound"){S.wound=+t.value;const o=document.getElementById("woundOut");if(o)o.innerHTML=woundHTML(S.wound,calc(S).umbral);save()}});
+document.addEventListener("keydown",ev=>{if(ev.key==="Escape"){const g=document.getElementById("gloss");if(!g.hidden)g.hidden=true}});
+
+const h0=(location.hash||"").replace("#","");if(VIEWS[h0])S.ui.stop=h0;
+render();
+})();
+</script>
+
+</body>
+</html>
